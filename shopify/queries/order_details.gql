@@ -1,0 +1,159 @@
+query GetOrderDetails($id: ID!) {
+    order(id: $id) {
+        id
+        name
+        note
+        closed
+        createdAt
+        updatedAt
+        discountCode
+        requiresShipping
+        displayFulfillmentStatus
+        fulfillmentOrders(first: 10) {
+            nodes {
+                id
+                assignedLocation {
+                    name
+                }
+                lineItems(first: 100) {
+                    nodes {
+                        id
+                        lineItem {
+                            id
+                            sku
+                            name
+                            title
+                            quantity
+                            vendor
+                            discountAllocations {
+                                allocatedAmountSet {
+                                    shopMoney {
+                                        amount
+                                        currencyCode
+                                    }
+                                }
+                                discountApplication {
+                                    allocationMethod
+                                    index
+                                    targetSelection
+                                    targetType
+                                    value {
+                                        ... on MoneyV2 {
+                                            amount
+                                            currencyCode
+                                        }
+                                        ... on PricingPercentageValue {
+                                            percentage
+                                        }
+                                    }
+                                }
+                            }
+                            discountedTotalSet(withCodeDiscounts: true) {
+                                shopMoney {
+                                    amount
+                                    currencyCode
+                                }
+                            }
+                            originalTotalSet {
+                                shopMoney {
+                                    amount
+                                    currencyCode
+                                }
+                            }
+                            duties {
+                                id
+                                price {
+                                    shopMoney {
+                                        amount
+                                        currencyCode
+                                    }
+                                }
+                                taxLines {
+                                    title
+                                    priceSet {
+                                        shopMoney {
+                                            amount
+                                            currencyCode
+                                        }
+                                    }
+                                }
+                            }
+                            taxLines(first: 5) {
+                                title
+                                rate
+                                priceSet {
+                                    shopMoney {
+                                        amount
+                                        currencyCode
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        displayAddress {
+            countryCodeV2
+        }
+        shippingAddress {
+            name
+            address1
+            address2
+            city
+            country
+            countryCodeV2
+        }
+        shippingLine {
+            id
+            title
+            carrierIdentifier
+            code
+            deliveryCategory
+            discountAllocations {
+                allocatedAmountSet {
+                    shopMoney {
+                        amount
+                        currencyCode
+                    }
+                }
+                discountApplication {
+                    allocationMethod
+                    index
+                    targetSelection
+                    targetType
+                    value {
+                        ... on MoneyV2 {
+                            amount
+                            currencyCode
+                        }
+                        ... on PricingPercentageValue {
+                            percentage
+                        }
+                    }
+                }
+            }
+            discountedPriceSet {
+                shopMoney {
+                    amount
+                    currencyCode
+                }
+            }
+            originalPriceSet {
+                shopMoney {
+                    amount
+                    currencyCode
+                }
+            }
+            taxLines {
+                title
+                priceSet {
+                    shopMoney {
+                        amount
+                        currencyCode
+                    }
+                }
+            }
+        }
+    }
+}

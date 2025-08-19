@@ -1,0 +1,19 @@
+query GetOrders($first: Int!, $after: String, $query: String) {
+    orders(
+        first: $first,
+        after: $after,
+        query: $query
+    ) {
+        nodes {
+            id
+            name
+            createdAt
+            updatedAt
+            displayFulfillmentStatus
+        }
+        pageInfo {
+            hasNextPage
+            endCursor
+        }
+    }
+}

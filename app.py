@@ -4,7 +4,6 @@ import json
 import time
 import logging
 import uvicorn
-import pandas as pd
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse

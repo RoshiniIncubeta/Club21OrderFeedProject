@@ -125,6 +125,11 @@ async def order_feed():
         content={"message": "Order feed generated successfully."},
         status_code=200
     )
+    
+    
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "shopify-orderfeed-service"}
 
 
 if __name__ == "__main__":

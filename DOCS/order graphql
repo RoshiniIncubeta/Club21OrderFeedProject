@@ -1,0 +1,245 @@
+Skip to main content
+Docs page
+Apps
+Storefronts
+Agents
+APIs and references
+
+
+Log in
+Sign up
+Collapse sidebar
+GraphQL Admin API
+Choose a version:
+
+2025-07 latest
+2025-07latest
+Anchor to orders
+orders
+query
+Returns a list of orders placed in the store, including data such as order status, customer, and line item details. Use the orders query to build reports, analyze sales performance, or automate fulfillment workflows. The orders query supports pagination, sorting, and filtering.
+
+Anchor to Arguments
+OrderConnection arguments
+•
+OrderConnection!
+Anchor to afterafter
+•
+String
+The elements that come after the specified cursor.
+
+Anchor to beforebefore
+•
+String
+The elements that come before the specified cursor.
+
+Anchor to firstfirst
+•
+Int
+The first n elements from the paginated list.
+
+Anchor to lastlast
+•
+Int
+The last n elements from the paginated list.
+
+Anchor to queryquery
+•
+String
+A filter made up of terms, connectives, modifiers, and comparators. You can apply one or more filters to a query. Learn more about Shopify API search syntax.
+
+Show filters
+Anchor to reversereverse
+•
+Boolean
+Default:false
+Reverse the order of the underlying list.
+
+Anchor to savedSearchIdsavedSearchId
+•
+ID
+The ID of a saved search. The search’s query string is used as the query argument.
+
+Anchor to sortKeysortKey
+•
+OrderSortKeys
+Default:PROCESSED_AT
+Sort the underlying list using a key. If your query is slow or returns an error, then try specifying a sort key that matches the field used in the search.
+
+Show enum values
+Was this section helpful?
+
+Yes
+
+No
+Anchor to Possible returnsPossible returns
+Anchor to edgesedges
+•
+[OrderEdge!]!
+non-null
+The connection between the node and its parent. Each edge contains a minimum of the edge's cursor and the node.
+
+Show fields
+Anchor to nodesnodes
+•
+[Order!]!
+non-null
+A list of nodes that are contained in OrderEdge. You can fetch data about an individual node, or you can follow the edges to fetch data about a collection of related nodes. At each node, you specify the fields that you want to retrieve.
+
+Show fields
+Anchor to pageInfopageInfo
+•
+PageInfo!
+non-null
+An object that’s used to retrieve cursor information about the current page.
+
+Show fields
+Was this section helpful?
+
+Yes
+
+No
+Examples
+
+Retrieve a list of orders
+Hide content
+GQL
+cURL
+Remix
+Node.js
+Ruby
+Show description
+Open in GraphiQL
+Copy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+const client = new shopify.clients.Graphql({session});
+const data = await client.query({
+  data: `query {
+    orders(first: 10) {
+      edges {
+        cursor
+        node {
+          id
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }`,
+});
+Hide content
+Response
+JSON
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+{
+  "orders": {
+    "edges": [
+      {
+        "cursor": "eyJsYXN0X2lkIjoxMjYyMTY1MTYsImxhc3RfdmFsdWUiOiIyMDA1LTA3LTMxIDE1OjU3OjExLjAwMDAwMCJ9",
+        "node": {
+          "id": "gid://shopify/Order/126216516"
+        }
+      },
+      {
+        "cursor": "eyJsYXN0X2lkIjoxNDg5Nzc3NzYsImxhc3RfdmFsdWUiOiIyMDA1LTA3LTMxIDE1OjU3OjExLjAwMDAwMCJ9",
+        "node": {
+          "id": "gid://shopify/Order/148977776"
+        }
+      },
+      {
+        "cursor": "eyJsYXN0X2lkIjoyMzUyNDAzMDIsImxhc3RfdmFsdWUiOiIyMDA1LTA3LTMxIDE1OjU3OjExLjAwMDAwMCJ9",
+        "node": {
+          "id": "gid://shopify/Order/235240302"
+        }
+      },
+      {
+        "cursor": "eyJsYXN0X2lkIjozNTc5NDQ4NTQsImxhc3RfdmFsdWUiOiIyMDA1LTA3LTMxIDE1OjU3OjExLjAwMDAwMCJ9",
+        "node": {
+          "id": "gid://shopify/Order/357944854"
+        }
+      },
+      {
+        "cursor": "eyJsYXN0X2lkIjo0MDQ0ODE1NzUsImxhc3RfdmFsdWUiOiIyMDA1LTA3LTMxIDE1OjU3OjExLjAwMDAwMCJ9",
+        "node": {
+          "id": "gid://shopify/Order/404481575"
+        }
+      },
+      {
+        "cursor": "eyJsYXN0X2lkIjo0MDkyMTQzNjMsImxhc3RfdmFsdWUiOiIyMDA1LTA3LTMxIDE1OjU3OjExLjAwMDAwMCJ9",
+        "node": {
+Updates
+Developer changelog
+Shopify Partners Slack
+Shopify Editions
+Business growth
+Shopify Partners Program
+Shopify App Store
+Shopify Academy
+Legal
+Terms of service
+API terms of use
+Privacy policy
+Partners Program Agreement
+Shopify
+About Shopify
+Shopify Plus
+Careers
+Investors
+Press and media

@@ -58,3 +58,8 @@ htmlcov/
 
 # Logs
 *.log
+
+# === Added for safety ===
+# Service account keys / secrets
+service-account-file.json
+*.json

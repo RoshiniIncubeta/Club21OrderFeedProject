@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 API_KEY = os.getenv("API_KEY")
 STORE_NAME = os.getenv("STORENAME")
-BUCKET_NAME = "club21-shopify-orderfeed"
+BUCKET_NAME = "club21"
 
 app = FastAPI()
 

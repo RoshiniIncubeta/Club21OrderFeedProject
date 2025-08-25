@@ -36,11 +36,30 @@ def save_to_json(data, filename):
         
 
 def post_csv_transform(filename):
-    with open(filename, "r") as f:
-        content = f.read()
-    content = content.replace('""""""', '""')
-    with open(filename, "w") as f:
-        f.write(content)
+    # Read file in binary then try common decodings to avoid platform-specific
+    # codec errors (Windows default cp1252). Write back as UTF-8.
+    with open(filename, "rb") as bf:
+        raw = bf.read()
+
+    text = None
+    decodings = ["utf-8", "utf-8-sig", "latin-1", "cp1252"]
+    for enc in decodings:
+        try:
+            text = raw.decode(enc)
+            break
+        except Exception:
+            continue
+
+    if text is None:
+        # Last resort: replace invalid characters
+        text = raw.decode("utf-8", errors="replace")
+
+    # Cleanup duplicated quotes pattern that sometimes appears
+    text = text.replace('""""""', '""')
+
+    # Write normalized UTF-8 file
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(text)
         
 
 def remove_dir(dir_path):

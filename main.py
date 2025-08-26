@@ -156,7 +156,7 @@ def main():
         logger.info(f"✅ Orders CSV saved locally: {local_path}")
 
         post_csv_transform(local_path)
-        remove_dir(pipeline.DESTINATION)
+        # remove_dir(pipeline.DESTINATION)  # Removed as data/ should not be deleted
 
         destination_path = upload_to_gcs(
             bucket_name=BUCKET_NAME,
@@ -167,4 +167,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG, # Changed to DEBUG for detailed output
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     main()

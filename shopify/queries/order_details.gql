@@ -41,7 +41,11 @@ query GetOrderDetails($id: ID!) {
         }
         variant {
           sku                  # ✅ SG SKU
+          image {
+            url                # ✅ Product Image URL
+          }
           product {
+            tags               # ✅ Product Tags (array of strings)
             vendor             # ✅ Brand
             productType        # ✅ Category
             metafield(namespace: "custom", key: "my_sku") {

@@ -111,8 +111,6 @@ async def order_feed():
         dataframe.to_csv(destination_file, index=False, quoting=csv.QUOTE_MINIMAL)
         post_csv_transform(destination_file)
         
-        remove_dir(pipeline.DESTINATION)
-        
         destination_path = upload_to_gcs(
             bucket_name=BUCKET_NAME,
             source_file_name=destination_file,

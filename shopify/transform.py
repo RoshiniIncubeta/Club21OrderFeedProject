@@ -22,7 +22,25 @@ REQUIRED_COLS = {
     "shipping_country": "Shipping Country",
     "order_name": "Order #",
     "quantity_ready": "Quantity Ready",
+    "gender": "Gender",
+    "image_url": "Image URL",
 }
+
+
+def get_gender(tags: list) -> str:
+    if not tags:
+        return "Unisex"
+    tags_lower = " ".join(tags).lower()
+    female_terms = any(term in tags_lower for term in ["women", "woman", "female", "girls"])
+    male_terms = any(term in tags_lower for term in ["men", "man", "male", "boys"])
+    if female_terms and male_terms:
+        return "Unisex"
+    elif female_terms:
+        return "Female"
+    elif male_terms:
+        return "Male"
+    else:
+        return "Unisex"
 
 
 class ShopifyTransform:
@@ -74,6 +92,12 @@ class ShopifyTransform:
                 if product.get("metafield") and product["metafield"].get("value"):
                     my_sku = product["metafield"]["value"]
 
+                if variant is None:
+                    logger.debug(f"Variant is None for line item: {li}")
+
+                image_data = variant.get("image")
+                image_url = image_data.get("url") if image_data else None
+
                 row = {
                     **order_info,
                     "my_sku": my_sku,
@@ -82,6 +106,8 @@ class ShopifyTransform:
                     "quantity_ready": li.get("fulfillableQuantity", 0),
                     "brand": product.get("vendor"),
                     "category": product.get("productType"),
+                    "gender": get_gender(product.get("tags", [])),
+                    "image_url": image_url, # Safely extract image URL
                     "net_price_sgd": float(
                         li.get("originalUnitPriceSet", {})
                           .get("shopMoney", {})
@@ -105,6 +131,9 @@ class ShopifyTransform:
                           .get("amount", 0.0)
                     ) if li.get("taxLines") else 0.0,
                 }
+
+                if not row["image_url"]:
+                    logger.debug(f"Image URL not found for line item. Variant data: {variant}")
 
                 # 🚀 Only append if at least one key column has a value
                 if any([row.get("sg_sku"), row.get("my_sku"), row.get("quantity")]):

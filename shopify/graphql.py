@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class ShopifyGraphQL:
     API_VERSION = "2025-04"
     # ✅ Always store JSON responses in Club21OrderFeed/data/
-    DESTINATION = Path(__file__).resolve().parent / "data"
+    DESTINATION = Path(__file__).resolve().parent.parent / "data"
 
     def __init__(self, api_key: str, store_name: str, query_path: Optional[str] = None):
         self.api_key = api_key

@@ -26,7 +26,7 @@ MANIFEST
 
 # Installer logs
 pip-log.txt
-pip-delete-this-directory.txt
+pip-delete-this-this-directory.txt
 
 # Unit test / coverage reports
 .coverage
@@ -43,6 +43,8 @@ htmlcov/
 .venv
 .env/
 .venv/
+.python-version
+uv.lock
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -59,7 +61,9 @@ htmlcov/
 # Logs
 *.log
 
-# === Added for safety ===
+# Data and Output
+data/
+output/
+
 # Service account keys / secrets
 service-account-file.json
-*.json

@@ -119,6 +119,7 @@ def main():
             destination_blob_name=f"LatestOrder/{LAST_ORDER_FILE.name}"
         )
         logger.info(f"Latest order saved: {LAST_ORDER_FILE}")
+        # os.remove(LAST_ORDER_FILE) # Removed to keep last_order.json local
 
         for order in orders:
             order_gid = order["id"]
@@ -131,9 +132,18 @@ def main():
             )
 
             order_id = order_gid.split("/")[-1]
-            save_file = f"order_{order_id}.json"
-            order_detail_files.append(save_file)
-            pipeline.save_response(order_response, save_file)
+            save_file_name = f"order_{order_id}.json"
+            local_json_path = pipeline.DESTINATION / save_file_name # Get full path for local JSON
+            order_detail_files.append(str(local_json_path)) # Append the full path
+            pipeline.save_response(order_response, save_file_name)
+
+            # Removed: Upload individual JSONs to GCS
+            # upload_to_gcs(
+            #     bucket_name=BUCKET_NAME,
+            #     source_file_name=str(local_json_path),
+            #     destination_blob_name=f"OrderJson/{save_file_name}"
+            # )
+            # logger.info(f"✅ JSON saved locally: {local_json_path}") # Adjusted message
 
             time.sleep(0.5)
 
@@ -147,20 +157,19 @@ def main():
         output_dir.mkdir(exist_ok=True)
 
         destination_file = f"S21_SH_ORDERS_{now}.csv"
-        local_path = output_dir / destination_file
+        local_csv_path = output_dir / destination_file # Use a distinct variable name
 
         # Write CSV cleanly
-        with open(local_path, "w", newline="", encoding="utf-8") as f:
+        with open(local_csv_path, "w", newline="", encoding="utf-8") as f:
             dataframe.to_csv(f, index=False, quoting=csv.QUOTE_MINIMAL)
 
-        logger.info(f"✅ Orders CSV saved locally: {local_path}")
+        logger.info(f"✅ Orders CSV saved locally: {local_csv_path}")
 
-        post_csv_transform(local_path)
-        # remove_dir(pipeline.DESTINATION)  # Removed as data/ should not be deleted
+        post_csv_transform(local_csv_path)
 
         destination_path = upload_to_gcs(
             bucket_name=BUCKET_NAME,
-            source_file_name=str(local_path),
+            source_file_name=str(local_csv_path),
             destination_blob_name=f"OrderFeed/{destination_file}"
         )
         logger.info(f"✅ File uploaded to GCS: {destination_path}")

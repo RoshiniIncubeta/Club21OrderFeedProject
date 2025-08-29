@@ -9,7 +9,6 @@ from shopify.graphql import ShopifyGraphQL
 logger = logging.getLogger(__name__)
 
 REQUIRED_COLS = {
-    "my_sku": "MY SKU",
     "sg_sku": "SG SKU",
     "quantity": "Quantity",
     "discount_code": "Discount Code",
@@ -87,20 +86,14 @@ class ShopifyTransform:
                 variant = li.get("variant") or {}
                 product = variant.get("product") or {}
 
-                # ✅ MY SKU from metafield (if queried in GQL)
-                my_sku = None
-                if product.get("metafield") and product["metafield"].get("value"):
-                    my_sku = product["metafield"]["value"]
-
                 if variant is None:
                     logger.debug(f"Variant is None for line item: {li}")
 
-                image_data = variant.get("image")
+                image_data = li.get("image") # Corrected path for image data
                 image_url = image_data.get("url") if image_data else None
 
                 row = {
                     **order_info,
-                    "my_sku": my_sku,
                     "sg_sku": variant.get("sku"),
                     "quantity": li.get("quantity", 0),
                     "quantity_ready": li.get("fulfillableQuantity", 0),
@@ -136,7 +129,7 @@ class ShopifyTransform:
                     logger.debug(f"Image URL not found for line item. Variant data: {variant}")
 
                 # 🚀 Only append if at least one key column has a value
-                if any([row.get("sg_sku"), row.get("my_sku"), row.get("quantity")]):
+                if any([row.get("sg_sku"), row.get("quantity")]):
                     rows.append(row)
 
         return rows

@@ -57,6 +57,11 @@ def post_csv_transform(filename):
     # Cleanup duplicated quotes pattern that sometimes appears
     text = text.replace('""""""', '""')
 
+    # Remove any completely empty lines to prevent extra blank rows
+    lines = text.splitlines()
+    non_empty_lines = [line for line in lines if line.strip()]
+    text = '\n'.join(non_empty_lines)
+
     # Write normalized UTF-8 file
     with open(filename, "w", encoding="utf-8") as f:
         f.write(text)

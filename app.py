@@ -4,21 +4,26 @@ import json
 import time
 import logging
 import uvicorn
+import pandas as pd
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from pathlib import Path
 from shopify.graphql import ShopifyGraphQL
 from shopify.transform import ShopifyTransform
 from shopify.utils import save_to_json, post_csv_transform, remove_dir, upload_to_gcs, download_from_gcs
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO, # Set to INFO for production, DEBUG for development
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 API_KEY = os.getenv("API_KEY")
 STORE_NAME = os.getenv("STORENAME")
-BUCKET_NAME = "club21"
+BUCKET_NAME = "club21" # Using the bucket name you created
 
 app = FastAPI()
-
 
 def load_latest_order(order_cache_path="last_order.json"):
     try:
@@ -41,7 +46,6 @@ def load_latest_order(order_cache_path="last_order.json"):
             logger.warning(f"Error reading latest order file: {e}")
     return None
 
-
 def build_query_filter(latest_order_id=None):
     if latest_order_id:
         return f"id:>{latest_order_id}"
@@ -50,85 +54,118 @@ def build_query_filter(latest_order_id=None):
         datetime_utc = default_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
         return f"created_at:>'{datetime_utc}'"
 
-@app.get("/create_feed")
-async def order_feed():
-    pipeline = ShopifyGraphQL(
-        api_key=API_KEY,
-        store_name=STORE_NAME
-    )
-    
-    latest_order = "last_order.json"
-    latest_order_id = load_latest_order(latest_order)
-    
-    orders_variables = {
-        "first": 250,
-        "after": None,
-        "query": build_query_filter(latest_order_id)
-    }
-
-    orders_response = pipeline.fetch(
-        query="orders",
-        variables=orders_variables
-    )
-
-    order_detail_files = []
-    orders = orders_response["data"]["orders"]["nodes"]
-    if orders:
-        new_latest_order = orders[-1]
-        save_to_json(new_latest_order, latest_order)
-        upload_to_gcs(
-            bucket_name=BUCKET_NAME,
-            source_file_name=latest_order,
-            destination_blob_name=f"LatestOrder/{latest_order}"
+@app.get("/run-pipeline")
+async def run_pipeline_endpoint():
+    if not API_KEY or not STORE_NAME:
+        logger.error("API_KEY or STORENAME environment variables are not set.")
+        return JSONResponse(
+            content={"message": "API_KEY or STORENAME environment variables are not set."},
+            status_code=500
         )
-        logger.info(f"Latest order saved: {latest_order}")
-        os.remove(latest_order)
+    try:
+        logger.info("Starting data pipeline from FastAPI endpoint.")
 
-        for order in orders:
-            if order["displayFulfillmentStatus"] not in ["UNFULFILLED"]:
-                continue
-            order_gid = order["id"]
-            order_name = order["name"]
-            logger.info(f"Processing Order ID: {order_gid}, Name: {order_name}")
+        pipeline = ShopifyGraphQL(
+            api_key=API_KEY,
+            store_name=STORE_NAME
+        )
 
-            order_response = pipeline.fetch(
-                query="order_details",
-                variables={"id": order_gid}
+        latest_order = "last_order.json"
+        latest_order_id = load_latest_order(latest_order)
+
+        orders_variables = {
+            "first": 250,
+            "after": None,
+            "query": build_query_filter(latest_order_id)
+        }
+
+        orders_response = pipeline.fetch(
+            query="orders",
+            variables=orders_variables
+        )
+
+        order_detail_files = []
+        orders = orders_response["data"]["orders"]["nodes"]
+        if orders:
+            new_latest_order = orders[-1]
+            save_to_json(new_latest_order, latest_order)
+            upload_to_gcs(
+                bucket_name=BUCKET_NAME,
+                source_file_name=latest_order,
+                destination_blob_name=f"LatestOrder/{latest_order}"
             )
+            logger.info(f"Latest order saved: {latest_order}")
+            # os.remove(latest_order) # Removed to keep last_order.json local
 
-            order_id = order_gid.split("/")[-1]
-            save_file = f"order_{order_id}.json"
-            order_detail_files.append(save_file)
-            pipeline.save_response(order_response, save_file)
+            for order in orders:
+                if order["displayFulfillmentStatus"] not in ["UNFULFILLED"]:
+                    continue
+                order_gid = order["id"]
+                order_name = order["name"]
+                logger.info(f"Processing Order ID: {order_gid}, Name: {order_name}")
 
-            time.sleep(0.5)
+                order_response = pipeline.fetch(
+                    query="order_details",
+                    variables={"id": order_gid}
+                )
 
-    if order_detail_files:
-        now = (datetime.now(timezone.utc) + timedelta(hours=8)).strftime("%Y%m%d_%H%M%S")
-        transformer = ShopifyTransform()
-        dataframe = transformer.post_transform()
-        destination_file = f"S21_SH_ORDERS_{now}.csv"
-        dataframe.to_csv(destination_file, index=False, quoting=csv.QUOTE_MINIMAL)
-        post_csv_transform(destination_file)
-        
-        destination_path = upload_to_gcs(
-            bucket_name=BUCKET_NAME,
-            source_file_name=destination_file,
-            destination_blob_name=f"OrderFeed/{destination_file}"
+                order_id = order_gid.split("/")[-1]
+                save_file_name = f"order_{order_id}.json"
+                local_json_path = pipeline.DESTINATION / save_file_name
+                order_detail_files.append(str(local_json_path))
+                pipeline.save_response(order_response, save_file_name)
+
+                # Removed: Upload individual JSONs to GCS
+                # upload_to_gcs(
+                #     bucket_name=BUCKET_NAME,
+                #     source_file_name=str(local_json_path),
+                #     destination_blob_name=f"OrderJson/{save_file_name}"
+                # )
+                logger.info(f"✅ JSON saved locally: {local_json_path}") # Adjusted message
+
+                time.sleep(0.5)
+
+        if order_detail_files:
+            now = (datetime.now(timezone.utc) + timedelta(hours=8)).strftime("%Y%m%d_%H%M%S")
+            transformer = ShopifyTransform()
+            dataframe = transformer.post_transform()
+
+            # Define output directory
+            output_dir = Path(__file__).resolve().parent / "output"
+            output_dir.mkdir(exist_ok=True)
+
+            destination_file = f"S21_SH_ORDERS_{now}.csv"
+            local_csv_path = output_dir / destination_file
+
+            # Write CSV cleanly
+            with open(local_csv_path, "w", newline="", encoding="utf-8") as f:
+                dataframe.to_csv(f, index=False, quoting=csv.QUOTE_MINIMAL)
+
+            post_csv_transform(local_csv_path)
+            
+            destination_path = upload_to_gcs(
+                bucket_name=BUCKET_NAME,
+                source_file_name=str(local_csv_path),
+                destination_blob_name=f"OrderFeed/{destination_file}"
+            )
+            logger.info(f"File uploaded to GCS: {destination_path}")
+            # os.remove(local_csv_path) # Removed to keep CSV local
+
+        logger.info("Data pipeline completed successfully.")
+        return JSONResponse(
+            content={"message": "Order feed generated and uploaded successfully."},
+            status_code=200
         )
-        logger.info(f"File uploaded to GCS: {destination_path}")
-        os.remove(destination_file)
+    except Exception as e:
+        logger.error(f"Error running data pipeline: {e}")
+        return JSONResponse(
+            content={"message": f"Failed to generate order feed: {e}"},
+            status_code=500
+        )
 
-    return JSONResponse(
-        content={"message": "Order feed generated successfully."},
-        status_code=200
-    )
-    
-    
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "shopify-orderfeed-service"}
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

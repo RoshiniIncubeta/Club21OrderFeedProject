@@ -17,6 +17,9 @@ query GetOrderDetails($id: ID!) {
         id
         quantity             # ✅ Quantity
         fulfillableQuantity  # ✅ Quantity Ready
+        image {
+          url                # ✅ Product Image URL
+        }
         originalUnitPriceSet {
           shopMoney {        # ✅ Net Price (SGD)
             amount
@@ -41,16 +44,10 @@ query GetOrderDetails($id: ID!) {
         }
         variant {
           sku                  # ✅ SG SKU
-          image {
-            url                # ✅ Product Image URL
-          }
           product {
             tags               # ✅ Product Tags (array of strings)
             vendor             # ✅ Brand
             productType        # ✅ Category
-            metafield(namespace: "custom", key: "my_sku") {
-              value            # ✅ MY SKU (from metafield)
-            }
           }
         }
       }

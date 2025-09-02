@@ -86,7 +86,3 @@ You can also check the health of the service:
 ## Contributing
 
 Feel free to open issues or pull requests.
-
-## Contact
-
-For any questions, please contact [Your Name/Email/GitHub Profile].

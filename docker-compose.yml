@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  shopify-pipeline:
+    build: .
+    image: shopify-orderfeed
+    container_name: shopify-pipeline-container
+    ports:
+      - "8000:8000"
+    environment:
+      API_KEY: ${API_KEY}
+      STORENAME: ${STORENAME}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/keys/service-account-file.json
+    volumes:
+      - ./service-account-file.json:/app/keys/service-account-file.json:ro
+      - ./output:/app/output
+      - ./checkpoints:/app/checkpoints
+    restart: unless-stopped

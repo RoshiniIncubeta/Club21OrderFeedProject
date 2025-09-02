@@ -44,7 +44,7 @@ htmlcov/
 .env/
 .venv/
 .python-version
-uv.lock
+
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -61,9 +61,7 @@ uv.lock
 # Logs
 *.log
 
-# Data and Output
-data/
-output/
+
 
 # Service account keys / secrets
 service-account-file.json
